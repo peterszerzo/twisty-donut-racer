@@ -115,6 +115,6 @@ export default class Canvas extends Component {
   }
 
   componentDidUpdate() {
-    webgl.update(this.state.ticks)
+    webgl.update(this.gl, this.state)
   }
 }

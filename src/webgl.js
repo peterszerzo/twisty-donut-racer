@@ -2,21 +2,6 @@ import { car } from "./Car"
 import { moebius } from "./Moebius"
 import { createProgram } from "./webgl-utils"
 
-/**
- * Game state object. Mutated by keyboard interactions.
- */
-const gameState = {
-  acceptKeys: true,
-  lateralPosition: {
-    current: 0,
-    target: 0
-  },
-  verticalPosition: {
-    current: 1,
-    target: 1
-  }
-}
-
 const { Matrix4 } = global
 
 /**
@@ -49,28 +34,24 @@ void main() {
 }
 `
 
-let gl
-
 // Entry point
 export function create (canvas) {
-  gl = canvas.getContext('webgl')
+  const gl = canvas.getContext('webgl')
   createProgram(gl, vertexShaderSource, fragmentShaderSource)
   setLight(gl)
   setTransform(gl)
-  document.addEventListener('keydown', handleKeyDown)
   return gl
 }
 
-export function update (ticks) {
-  setPerspective(gl, ticks)
+export function update (gl, state) {
+  setPerspective(gl, state.ticks)
   gl.clearColor(0, 0, 0, 0)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-  animateLateralPosition()
   drawShape(gl, moebius)
   drawShape(gl, car, transformCar(
-    ticks / 50,
-    gameState.lateralPosition.current,
-    gameState.verticalPosition.current
+    state.ticks / 50,
+    state.lateralPosition.current,
+    state.verticalPosition.current
   ))
 }
 
@@ -113,51 +94,6 @@ function transformCar (angle, lateralPosition, verticalPosition) {
     .multiply(rotZ)
     .multiply(scale)
 }
-
-/**
- * Animate current position values toward the target ones.
- */
-function animateLateralPosition () {
-  if (gameState.lateralPosition.current < gameState.lateralPosition.target - 0.001) {
-    gameState.lateralPosition.current += 0.025
-  } else if (gameState.lateralPosition.current > gameState.lateralPosition.target + 0.001) {
-    gameState.lateralPosition.current -= 0.025
-  }
-  if (gameState.verticalPosition.current < gameState.verticalPosition.target - 0.001) {
-    gameState.verticalPosition.current += 0.05
-  } else if (gameState.verticalPosition.current > gameState.verticalPosition.target + 0.001) {
-    gameState.verticalPosition.current -= 0.05
-  }
-}
-
-/**
- * Handle key down event.
- * @param {Object} e - Event object.
- */
-function handleKeyDown (e) {
-  if (!gameState.acceptKeys) {
-    return
-  }
-  gameState.acceptKeys = false
-  setTimeout(function () {
-    gameState.acceptKeys = true
-  }, 100)
-  const keyCode = e.keyCode
-  if (keyCode === 39) {
-    gameState.lateralPosition.target = Math.max(
-      gameState.lateralPosition.target - 0.5,
-      -1
-    )
-  } else if (keyCode === 37) {
-    gameState.lateralPosition.target = Math.min(
-      gameState.lateralPosition.target + 0.5,
-      1
-    )
-  } else if (keyCode === 40) {
-    gameState.verticalPosition.target = -gameState.verticalPosition.target
-  }
-}
-
 
 function setPerspective (gl, ticks) {
   const perspectiveMatrix = new Matrix4()
