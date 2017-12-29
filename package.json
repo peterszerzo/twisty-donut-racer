@@ -1,0 +1,20 @@
+{
+  "name": "twisty-donut-racer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^16.1.1",
+    "react-dom": "^16.1.1",
+    "react-scripts": "1.0.17"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "deploy": "npm run build && git branch -D gh-pages && git checkout --orphan gh-pages && trash src public && mv build/* . && git add . && git commit -m 'Deploy' && git push origin gh-pages && git checkout master"
+  },
+  "devDependencies": {
+    "prettier": "^1.9.2"
+  }
+}
