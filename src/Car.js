@@ -1,4 +1,47 @@
 import React, { Component } from "react"
+import { drawShape } from "./webgl"
+
+const { Matrix4 } = global
+
+/**
+ * Compute car transform matrix.
+ * @param {float} angle - Angle around the Moebius strip, in Radians.
+ * @param {lateralPosition} - Normalized position along the width of the strip. Varies between +1 and -1.
+ * @param {verticalPosition} - Normalized vertical position, varying between -1 and +1. These two values correspond to the two sides of the strip as the vehicle ascends.
+ * @returns {Matrix4} transform - Transformation matrix.
+ */
+function transformCar (angle, lateralPosition, verticalPosition) {
+  const rotZ = new Matrix4().setRotate(
+    (angle + Math.PI / 2) * 180 / Math.PI,
+    0,
+    0,
+    1
+  )
+  const rotX = new Matrix4().setRotate(
+    (-angle + Math.PI / 2) * 180 / Math.PI,
+    Math.cos(angle + Math.PI / 2),
+    Math.sin(angle + Math.PI / 2),
+    0
+  )
+  const translateXY = new Matrix4().setTranslate(
+    0.5 * Math.cos(angle),
+    0.5 * Math.sin(angle),
+    0
+  )
+  const translateZ = new Matrix4().setTranslate(0, 0, verticalPosition * 0.04)
+  const translateY = new Matrix4().setTranslate(
+    -lateralPosition * 0.10 * Math.sin(angle + Math.PI / 2),
+    lateralPosition * 0.10 * Math.cos(angle + Math.PI / 2),
+    0
+  )
+  const scale = new Matrix4().setScale(0.6, 0.6, 0.6)
+  return translateXY
+    .multiply(rotX)
+    .multiply(translateY)
+    .multiply(translateZ)
+    .multiply(rotZ)
+    .multiply(scale)
+}
 
 /**
  * Generate car shape.
@@ -29,44 +72,44 @@ export function car () {
   }, {
     normal: [0.24253562503633297, 0.0, 0.97014250014533188],
     coordinates: [
-      [0.029999999999999999, -0.050000000000000003, 0.01],
-      [0.070000000000000007, -0.050000000000000003, 0.0],
-      [0.070000000000000007, 0.050000000000000003, 0.0]
+      [0.03, -0.05, 0.01],
+      [0.07, -0.05, 0.0],
+      [0.07, 0.05, 0.0]
     ]
   }, {
     normal: [0.0, 0.099503719020998915, 0.99503719020998915],
     coordinates: [
-      [0.070000000000000007, 0.050000000000000003, 0.0],
-      [0.029999999999999999, 0.050000000000000003, 0.0],
-      [0.029999999999999999, -0.050000000000000003, 0.01]
+      [0.07, 0.05, 0.0],
+      [0.03, 0.05, 0.0],
+      [0.03, -0.05, 0.01]
     ]
   }, {
     normal: [-0.097590007294853315, 0.19518001458970663, 0.97590007294853309],
     coordinates: [
-      [-0.070000000000000007, -0.050000000000000003, 0.0],
-      [0.029999999999999999, -0.050000000000000003, 0.01],
-      [-0.02, 0.0, -0.0050000000000000001]
+      [-0.07, -0.05, 0.0],
+      [0.03, -0.05, 0.01],
+      [-0.02, 0.0, -0.005]
     ]
   }, {
     normal: [0.099503719020998915, 0.0, 0.99503719020998915],
     coordinates: [
-      [-0.070000000000000007, 0.050000000000000003, 0.0],
-      [-0.070000000000000007, -0.050000000000000003, 0.0],
-      [-0.02, 0.0, -0.0050000000000000001]
+      [-0.07, 0.05, 0.0],
+      [-0.07, -0.05, 0.0],
+      [-0.02, 0.0, -0.005]
     ]
   }, {
     normal: [0.0, -0.099503719020998915, 0.99503719020998915],
     coordinates: [
-      [-0.070000000000000007, 0.050000000000000003, 0.0],
-      [-0.02, 0.0, -0.0050000000000000001],
-      [0.029999999999999999, 0.050000000000000003, 0.0]
+      [-0.07, 0.05, 0.0],
+      [-0.02, 0.0, -0.005],
+      [0.03, 0.05, 0.0]
     ]
   }, {
     normal: [-0.19518001458970663, 0.097590007294853315, 0.97590007294853309],
     coordinates: [
-      [-0.02, 0.0, -0.0050000000000000001],
-      [0.029999999999999999, -0.050000000000000003, 0.01],
-      [0.029999999999999999, 0.050000000000000003, 0.0]
+      [-0.02, 0.0, -0.005],
+      [0.03, -0.05, 0.01],
+      [0.03, 0.05, 0.0]
     ]
   }]
   let vertices = []
@@ -88,7 +131,13 @@ export default class Car extends Component {
   render() {
     return null
   }
+
   componentDidMount() {
     console.log("rendering car")
+    console.log(this.props)
+  }
+
+  componentDidUpdate() {
+    drawShape(this.props.gl, car, transformCar(this.props.x, this.props.y, this.props.z))
   }
 }

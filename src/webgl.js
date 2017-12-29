@@ -1,8 +1,76 @@
-import { car } from "./Car"
-import { moebius } from "./Moebius"
-import { createProgram } from "./webgl-utils"
-
 const { Matrix4 } = global
+
+/**
+ * Load a single shader.
+ * @param {Object} gl - WebGL rendering context.
+ * @param {number} type - Shader type, as a constate parameter gl.VERTEX_SHADER or gl.FRAGMENT_SHADER.
+ * @param {String} source - Shader source code.
+ * @returns {Object} shader - Shader.
+ */
+export function loadShader (gl, type, source) {
+  const shader = gl.createShader(type)
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
+  if (!compiled) {
+    let error = gl.getShaderInfoLog(shader)
+    console.log('Failed to compile shader: ' + error)
+    gl.deleteShader(shader)
+    return null
+  }
+  return shader
+}
+
+/**
+ * Initialize shaders
+ * @param {Object} gl - WebGL rendering context.
+ * @param {String} vShader - Vertex shader source code.
+ * @param {String} fShader - Fragment shader source code.
+ * @returns {Bool} success - Returns whether the initialization was successful.
+ */
+export function createProgram (gl, vShader, fFhader) {
+  // Create shader object
+  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vShader)
+  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fFhader)
+  if (!vertexShader || !fragmentShader) {
+    return null
+  }
+
+  // Create a program object
+  const program = gl.createProgram()
+  if (!program) {
+    return null
+  }
+
+  // Attach the shader objects
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+
+  // Link the program object
+  gl.linkProgram(program)
+
+  gl.enable(gl.DEPTH_TEST)
+
+  // Check the result of linking
+  const linked = gl.getProgramParameter(program, gl.LINK_STATUS)
+  if (!linked) {
+    let error = gl.getProgramInfoLog(program)
+    console.log('Failed to link program: ' + error)
+    gl.deleteProgram(program)
+    gl.deleteShader(fragmentShader)
+    gl.deleteShader(vertexShader)
+    return null
+  }
+ 
+  if (!program) {
+    console.log('Failed to create program')
+    return false
+  }
+  gl.useProgram(program)
+  gl.program = program
+  return program
+}
+
 
 /**
  * Vertex shader source.
@@ -44,56 +112,12 @@ export function create (canvas) {
 }
 
 export function update (gl, state) {
-  setPerspective(gl, state.ticks)
+  const ticks = (state.currentTime - state.startTime) / 16
+  setPerspective(gl, ticks)
   gl.clearColor(0, 0, 0, 0)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-  drawShape(gl, moebius)
-  drawShape(gl, car, transformCar(
-    state.ticks / 50,
-    state.lateralPosition.current,
-    state.verticalPosition.current
-  ))
 }
 
-/**
- * Compute car transform matrix.
- * @param {float} angle - Angle around the Moebius strip, in Radians.
- * @param {lateralPosition} - Normalized position along the width of the strip. Varies between +1 and -1.
- * @param {verticalPosition} - Normalized vertical position, varying between -1 and +1. These two values correspond to the two sides of the strip as the vehicle ascends.
- * @returns {Matrix4} transform - Transformation matrix.
- */
-function transformCar (angle, lateralPosition, verticalPosition) {
-  const rotZ = new Matrix4().setRotate(
-    (angle + Math.PI / 2) * 180 / Math.PI,
-    0,
-    0,
-    1
-  )
-  const rotX = new Matrix4().setRotate(
-    (-angle + Math.PI / 2) * 180 / Math.PI,
-    Math.cos(angle + Math.PI / 2),
-    Math.sin(angle + Math.PI / 2),
-    0
-  )
-  const translateXY = new Matrix4().setTranslate(
-    0.5 * Math.cos(angle),
-    0.5 * Math.sin(angle),
-    0
-  )
-  const translateZ = new Matrix4().setTranslate(0, 0, verticalPosition * 0.04)
-  const translateY = new Matrix4().setTranslate(
-    -lateralPosition * 0.10 * Math.sin(angle + Math.PI / 2),
-    lateralPosition * 0.10 * Math.cos(angle + Math.PI / 2),
-    0
-  )
-  const scale = new Matrix4().setScale(0.6, 0.6, 0.6)
-  return translateXY
-    .multiply(rotX)
-    .multiply(translateY)
-    .multiply(translateZ)
-    .multiply(rotZ)
-    .multiply(scale)
-}
 
 function setPerspective (gl, ticks) {
   const perspectiveMatrix = new Matrix4()
@@ -132,7 +156,7 @@ function setLight (gl) {
  * @param {Function} shapeConstructor - A function returning a shape object.
  * @param {Matrix4} transform - Base transform for the shape. Replaces current transform uniform value in the vertex shader.
  */
-function drawShape (gl, shapeConstructor, transform) {
+export function drawShape (gl, shapeConstructor, transform) {
   setTransform(gl, transform)
   const shape = shapeConstructor()
   const vertexBuffer = gl.createBuffer()

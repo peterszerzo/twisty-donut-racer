@@ -1,4 +1,7 @@
 import React, { Component } from "react"
+import { drawShape } from "./webgl"
+
+const { Matrix4 } = global
 
 /**
  * Create moebius shape
@@ -47,7 +50,12 @@ export default class Moebius extends Component {
   render() {
     return null
   }
+
   componentDidMount() {
     console.log("mounted")
+  }
+
+  componentDidUpdate() {
+    drawShape(this.props.gl, moebius)
   }
 }

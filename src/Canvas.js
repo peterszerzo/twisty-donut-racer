@@ -2,95 +2,136 @@ import React, { Component } from "react"
 import * as webgl from "./webgl"
 import Moebius from "./Moebius"
 import Car from "./Car"
+import Logo from "./Logo"
 
 export default class Canvas extends Component {
   state = {
-    ticks: 0,
+    startTime: new Date().getTime(),
+    currentTime: new Date().getTime(),
     acceptKeys: true,
     window: {
       width: 300,
       height: 300
     },
-    lateralPosition: {
-      current: 0,
-      target: 0
-    },
-    verticalPosition: {
-      current: 1,
-      target: 1
+    car: {
+      y: 0,
+      yTarget: 0,
+      z: 1,
+      zTarget: 1
     }
   }
 
   render() {
+    const minWH = Math.min(this.state.window.width, this.state.window.height)
+    const ticks = (this.state.currentTime - this.state.startTime) / 16
+    const xCar = ticks / 50
     return (
-      <canvas
-        width={this.state.window.width}
-        height={this.state.window.height}
-        ref={node => {
-          this.containerNode = node
+      <div
+        style={{
+          width: this.state.window.width,
+          height: this.state.window.height,
+          backgroundColor: "#000013",
+          color: "#FFF",
+          position: "relative"
         }}
       >
-        <Car />
-        <Moebius />
-      </canvas>
+        <div
+          style={{
+            position: "absolute",
+            opacity: 0.5,
+            top: 20,
+            left: 20,
+            width: 60,
+            height: 60
+          }}
+        >
+          <Logo/>
+        </div>
+        <div
+          style={{
+            color: "#FFF",
+            opacity: 1,
+            fontSize: 16,
+            position: "absolute",
+            lineHeight: 1.4,
+            top: 28,
+            left: 90
+          }}
+        >
+          <strong>Twisty Donut Racer</strong>
+          <br/>
+          <span style={{opacity: 0.7}}>Use arrow keys to steer and descend.</span>
+        </div>
+        <canvas
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate3d(-50%, -50%, 0)"
+          }}
+          width={minWH}
+          height={minWH}
+          ref={node => {
+            this.containerNode = node
+          }}
+        >
+          <Car gl={this.gl} x={xCar} y={this.state.car.y} z={this.state.car.z} />
+          <Moebius gl={this.gl} />
+        </canvas>
+      </div>
     )
   }
 
   componentDidMount() {
     this.gl = webgl.create(this.containerNode)
     this.resize()
-    window.addEventListener('resize', this.resize.bind(this))
-    document.addEventListener('keydown', this.handleKeyDown.bind(this))
+    window.addEventListener("resize", this.resize.bind(this))
+    document.addEventListener("keydown", this.handleKeyDown.bind(this))
     const tick = () => {
       window.requestAnimationFrame(() => {
-        this.setState(p => ({
-          ticks: p.ticks + 1,
-          ...this.animatePositions()
-        }), () => {
-          tick()
-        })
+        this.setState(
+          p => ({
+            currentTime: new Date().getTime(),
+            ...this.animatePositions()
+          }),
+          () => {
+            tick()
+          }
+        )
       })
     }
     tick()
   }
 
   animatePositions() {
-    const stateChanges = {
-      lateralPosition: {...this.state.lateralPosition},
-      verticalPosition: {...this.state.verticalPosition}
+    const newCar = {...this.state.car}
+    if (newCar.y < newCar.yTarget - 0.001) {
+      newCar.y += 0.025
+    } else if ( newCar.y > newCar.yTarget + 0.001) {
+      newCar.y -= 0.025
     }
-    if (this.state.lateralPosition.current < this.state.lateralPosition.target - 0.001) {
-      stateChanges.lateralPosition.current += 0.025
-    } else if (this.state.lateralPosition.current > this.state.lateralPosition.target + 0.001) {
-      stateChanges.lateralPosition.current -= 0.025
+    if (newCar.z < newCar.zTarget - 0.001) {
+      newCar.z += 0.05
+    } else if ( newCar.z > newCar.zTarget + 0.001) {
+      newCar.z -= 0.05
     }
-    if (this.state.verticalPosition.current < this.state.verticalPosition.target - 0.001) {
-      stateChanges.verticalPosition.current += 0.05
-    } else if (this.state.verticalPosition.current > this.state.verticalPosition.target + 0.001) {
-      stateChanges.verticalPosition.current -= 0.05
-    }
-    return stateChanges
+    return {car: newCar}
   }
 
   resize() {
-    const w = Math.min(document.body.clientWidth, document.body.clientHeight)
-    this.setState(p => ({
-      window: {
-        width: w,
-        height: w
-      }
-    }))
-    this.gl && this.gl.viewport(0, 0, w, w)
+    const width = document.body.clientWidth
+    const height = document.body.clientHeight
+    const minWH = Math.min(width, height)
+    this.setState(p => ({ window: { width, height } }))
+    this.gl && this.gl.viewport(0, 0, minWH, minWH)
   }
 
   handleKeyDown(e) {
     if (!this.state.acceptKeys) {
       return
     }
-    const stateChanges = {
-      lateralPosition: {...this.state.lateralPosition},
-      verticalPosition: {...this.state.verticalPosition}
-    }
+    const newCar = {...this.state.car}
+    const stateChanges = {}
     stateChanges.acceptKeys = false
     setTimeout(() => {
       this.setState(p => ({
@@ -99,22 +140,17 @@ export default class Canvas extends Component {
     }, 100)
     const keyCode = e.keyCode
     if (keyCode === 39) {
-      stateChanges.lateralPosition.target = Math.max(
-        this.state.lateralPosition.target - 0.5,
-        -1
-      )
+      newCar.yTarget = Math.max(newCar.yTarget - 0.5, -1)
     } else if (keyCode === 37) {
-      stateChanges.lateralPosition.target = Math.min(
-        this.state.lateralPosition.target + 0.5,
-        1
-      )
+      newCar.yTarget = Math.min(newCar.yTarget + 0.5, 1)
     } else if (keyCode === 40) {
-      stateChanges.verticalPosition.target = -this.state.verticalPosition.target
+      newCar.zTarget = -newCar.zTarget
     }
+    stateChanges.car = newCar
     this.setState(p => stateChanges)
   }
 
-  componentDidUpdate() {
+  componentWillUpdate() {
     webgl.update(this.gl, this.state)
   }
 }
