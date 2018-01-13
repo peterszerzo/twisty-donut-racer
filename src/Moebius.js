@@ -46,16 +46,14 @@ export function moebius () {
   }
 }
 
+const moebiusShape = moebius()
+
 export default class Moebius extends Component {
   render() {
     return null
   }
 
-  componentDidMount() {
-    console.log("mounted")
-  }
-
   componentDidUpdate() {
-    drawShape(this.props.gl, moebius)
+    drawShape(this.props.gl, moebiusShape)
   }
 }

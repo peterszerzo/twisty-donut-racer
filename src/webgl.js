@@ -153,12 +153,11 @@ function setLight (gl) {
 /**
  * Draw a shape
  * @param {Object} gl - WebGL rendering context.
- * @param {Function} shapeConstructor - A function returning a shape object.
+ * @param {Object} shape - Shape object.
  * @param {Matrix4} transform - Base transform for the shape. Replaces current transform uniform value in the vertex shader.
  */
-export function drawShape (gl, shapeConstructor, transform) {
+export function drawShape (gl, shape, transform) {
   setTransform(gl, transform)
-  const shape = shapeConstructor()
   const vertexBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
   gl.bufferData(gl.ARRAY_BUFFER, shape.vertices, gl.STATIC_DRAW)

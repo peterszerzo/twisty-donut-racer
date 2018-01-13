@@ -3,6 +3,7 @@ import * as webgl from "./webgl"
 import Moebius from "./Moebius"
 import Car from "./Car"
 import Logo from "./Logo"
+import Obstacle from "./Obstacle"
 
 export default class Canvas extends Component {
   state = {
@@ -77,6 +78,7 @@ export default class Canvas extends Component {
         >
           <Car gl={this.gl} x={xCar} y={this.state.car.y} z={this.state.car.z} />
           <Moebius gl={this.gl} />
+          <Obstacle gl={this.gl} x={0} y={0} z={1} />
         </canvas>
       </div>
     )
