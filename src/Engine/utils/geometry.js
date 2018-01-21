@@ -23,7 +23,8 @@ export const trianglesToWebglObject = (triangles, color) => {
  * @param {z} - Normalized vertical position, varying between -1 and +1. These two values correspond to the two sides of the strip as the vehicle ascends.
  * @returns {Matrix4} transform - Transformation matrix.
  */
-export const transformOntoMoebius = (x, y, z) => {
+export const transformOntoMoebius = (x_, y, z) => {
+  const x = x_ * Math.PI * 2
   const rotZ = new Matrix4().setRotate(
     (x + Math.PI / 2) * 180 / Math.PI,
     0,

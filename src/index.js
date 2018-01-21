@@ -1,6 +1,5 @@
-import "./cuon-matrix"
 import React from "react"
 import ReactDOM from "react-dom"
-import Canvas from "./Canvas"
+import App from "./AppBasic"
 
-ReactDOM.render(<Canvas />, document.getElementById("root"))
+ReactDOM.render(<App />, document.getElementById("root"))

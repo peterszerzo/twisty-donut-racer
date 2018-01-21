@@ -111,21 +111,25 @@ export function create (canvas) {
   return gl
 }
 
-export function update (gl, state) {
-  const ticks = (state.currentTime - state.startTime) / 16
-  setPerspective(gl, ticks)
+export function update (gl) {
   gl.clearColor(0, 0, 0, 0)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 
-function setPerspective (gl, ticks) {
+const { PI, sin, cos } = Math
+
+export function setPerspective (gl, lat, lng) {
   const perspectiveMatrix = new Matrix4()
   perspectiveMatrix.setPerspective(24, 1, 1, 100)
+  const sinLng = sin(lng * PI / 180)
+  const cosLng = cos(lng * PI / 180)
+  const sinLat = sin(lat * PI / 180)
+  const cosLat = cos(lat * PI / 180)
   perspectiveMatrix.lookAt(
-    3 * Math.sin(ticks / 300),
-    3 * Math.cos(ticks / 300),
-    1,
+    3 * cosLat * cosLng,
+    3 * cosLat * sinLng,
+    3 * sinLat,
     0, 0, 0, 0, 0, 1
   )
   const uPerspective = gl.getUniformLocation(gl.program, 'u_Perspective')

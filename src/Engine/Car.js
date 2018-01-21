@@ -1,6 +1,6 @@
 import React, { Component } from "react"
-import { drawShape } from "./webgl"
-import { transformOntoMoebius, trianglesToWebglObject } from "./utils"
+import { drawShape } from "./utils/webgl"
+import { transformOntoMoebius, trianglesToWebglObject } from "./utils/geometry"
 
 const { Matrix4 } = global
 
@@ -61,18 +61,24 @@ const triangles = [
 
 const carShape = trianglesToWebglObject(triangles, [0.05, 0.05, 0.9, 1.0])
 
-console.log(carShape)
-
 export default class Car extends Component {
   render() {
     return null
   }
 
-  componentDidUpdate() {
-    drawShape(
+  update() {
+    this.props.gl && drawShape(
       this.props.gl,
       carShape,
       transformOntoMoebius(this.props.x, this.props.y, this.props.z)
     )
+  }
+
+  componentDidMount() {
+    this.update()
+  }
+
+  componentDidUpdate() {
+    this.update()
   }
 }

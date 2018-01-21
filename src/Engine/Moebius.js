@@ -1,5 +1,5 @@
 import React, { Component } from "react"
-import { drawShape } from "./webgl"
+import { drawShape } from "./utils/webgl"
 
 const { Matrix4 } = global
 
@@ -53,7 +53,15 @@ export default class Moebius extends Component {
     return null
   }
 
+  update() {
+    this.props.gl && drawShape(this.props.gl, moebiusShape)
+  }
+
+  componentDidMount() {
+    this.update()
+  }
+
   componentDidUpdate() {
-    drawShape(this.props.gl, moebiusShape)
+    this.update()
   }
 }

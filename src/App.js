@@ -1,11 +1,8 @@
-import React, { Component } from "react"
-import * as webgl from "./webgl"
-import Moebius from "./Moebius"
-import Car from "./Car"
-import Logo from "./Logo"
-import Obstacle from "./Obstacle"
+import React from "react"
+import { Game, Moebius, Car, Obstacle } from "./Engine"
+import { Logo, Banner } from "./Components"
 
-export default class Canvas extends Component {
+export default class App extends React.Component {
   state = {
     startTime: new Date().getTime(),
     currentTime: new Date().getTime(),
@@ -25,7 +22,7 @@ export default class Canvas extends Component {
   render() {
     const minWH = Math.min(this.state.window.width, this.state.window.height)
     const ticks = (this.state.currentTime - this.state.startTime) / 16
-    const xCar = ticks / 50
+    const xCar = ticks / 250
     return (
       <div
         style={{
@@ -36,56 +33,18 @@ export default class Canvas extends Component {
           position: "relative"
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            opacity: 0.5,
-            top: 20,
-            left: 20,
-            width: 60,
-            height: 60
-          }}
-        >
-          <Logo/>
-        </div>
-        <div
-          style={{
-            color: "#FFF",
-            opacity: 1,
-            fontSize: 16,
-            position: "absolute",
-            lineHeight: 1.4,
-            top: 28,
-            left: 90
-          }}
-        >
-          <strong>Twisty Donut Racer</strong>
-          <br/>
-          <span style={{opacity: 0.7}}>Use arrow keys to steer and descend.</span>
-        </div>
-        <canvas
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate3d(-50%, -50%, 0)"
-          }}
-          width={minWH}
-          height={minWH}
-          ref={node => {
-            this.containerNode = node
-          }}
-        >
-          <Car gl={this.gl} x={xCar} y={this.state.car.y} z={this.state.car.z} />
-          <Moebius gl={this.gl} />
-          <Obstacle gl={this.gl} x={0} y={0} z={1} />
-        </canvas>
+        <Banner />
+        <Game size={minWH} lat={30} lng={ticks / 300 * 40}>
+          <Moebius />
+          <Car x={xCar} y={this.state.car.y} z={this.state.car.z} />
+          <Obstacle x={0} y={0} z={1} />
+          <Obstacle x={0} y={0} z={1} />
+        </Game>
       </div>
     )
   }
 
   componentDidMount() {
-    this.gl = webgl.create(this.containerNode)
     this.resize()
     window.addEventListener("resize", this.resize.bind(this))
     document.addEventListener("keydown", this.handleKeyDown.bind(this))
@@ -106,18 +65,18 @@ export default class Canvas extends Component {
   }
 
   animatePositions() {
-    const newCar = {...this.state.car}
+    const newCar = { ...this.state.car }
     if (newCar.y < newCar.yTarget - 0.001) {
       newCar.y += 0.025
-    } else if ( newCar.y > newCar.yTarget + 0.001) {
+    } else if (newCar.y > newCar.yTarget + 0.001) {
       newCar.y -= 0.025
     }
     if (newCar.z < newCar.zTarget - 0.001) {
       newCar.z += 0.05
-    } else if ( newCar.z > newCar.zTarget + 0.001) {
+    } else if (newCar.z > newCar.zTarget + 0.001) {
       newCar.z -= 0.05
     }
-    return {car: newCar}
+    return { car: newCar }
   }
 
   resize() {
@@ -125,14 +84,13 @@ export default class Canvas extends Component {
     const height = document.body.clientHeight
     const minWH = Math.min(width, height)
     this.setState(p => ({ window: { width, height } }))
-    this.gl && this.gl.viewport(0, 0, minWH, minWH)
   }
 
   handleKeyDown(e) {
     if (!this.state.acceptKeys) {
       return
     }
-    const newCar = {...this.state.car}
+    const newCar = { ...this.state.car }
     const stateChanges = {}
     stateChanges.acceptKeys = false
     setTimeout(() => {
@@ -150,9 +108,5 @@ export default class Canvas extends Component {
     }
     stateChanges.car = newCar
     this.setState(p => stateChanges)
-  }
-
-  componentWillUpdate() {
-    webgl.update(this.gl, this.state)
   }
 }
